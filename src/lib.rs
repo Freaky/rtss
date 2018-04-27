@@ -12,11 +12,11 @@ pub fn duration_to_human(d: &Duration) -> String {
 
     if ts > 0 {
         let mut s = ts;
-        let mut ds = (f64::from(ns) / 10_000_000_f64).round() as u64;
-        if ds == 100 {
-            // round up to the nearest decisecond
+        let mut cs = (f64::from(ns) / 10_000_000_f64).round() as u64;
+        if cs == 100 {
+            // round up to the nearest centisecond
             s += 1;
-            ds = 0;
+            cs = 0;
         }
 
         if ts >= 86400 {
@@ -34,7 +34,7 @@ pub fn duration_to_human(d: &Duration) -> String {
             s %= 60
         }
 
-        write!(ret, "{}.{:02}s", s, ds).unwrap();
+        write!(ret, "{}.{:02}s", s, cs).unwrap();
     } else if ns > 100_000 {
         write!(ret, "{:.1}ms", f64::from(ns) / 1_000_000_f64).unwrap();
     } else if ns > 100 {
