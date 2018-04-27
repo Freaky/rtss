@@ -43,6 +43,7 @@ fn main() {
 
     let start = Instant::now();
     let mut stdout = io::stdout();
+    let mut stderr = io::stderr();
 
     if command.is_empty() {
         let mut stdin = io::stdin();
@@ -55,14 +56,28 @@ fn main() {
             .args(args)
             .stdin(Stdio::inherit())
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .expect("Failed to spawn child");
 
         {
-            let mut stdin = child.stdout.as_mut().unwrap();
+            use std::thread;
+            let out = {
+                let mut child_stdout = child.stdout.take().unwrap();
+                thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, &start))
+            };
 
-            if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, &start) {
-                writeln!(io::stderr(), "{:?}", e).ok();
+            let err = {
+                let mut child_stderr = child.stderr.take().unwrap();
+                thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, &start))
+            };
+
+            if let Err(e) = out.join().unwrap() {
+                writeln!(io::stderr(), "Error on stdout: {:?}", e).ok();
+            }
+
+            if let Err(e) = err.join().unwrap() {
+                writeln!(io::stderr(), "Error on stderr: {:?}", e).ok();
             }
         }
 
