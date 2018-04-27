@@ -54,7 +54,7 @@ fn main() {
         }
         writeln!(
             io::stdout(),
-            "{:>8}    exit {}",
+            "{:>8}    exit code: {}",
             duration_to_human(&start.elapsed()),
             ex
         ).ok();
