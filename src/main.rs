@@ -51,7 +51,11 @@ fn main() {
         if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, '|', &start) {
             writeln!(io::stderr(), "{:?}", e).ok();
         }
-        println!("Elapsed: {}", duration_to_human(&start.elapsed()));
+        writeln!(
+            io::stdout(),
+            "Elapsed: {}",
+            duration_to_human(&start.elapsed())
+        ).ok();
     } else if let Some((cmd, args)) = command.split_first() {
         let mut child = match Command::new(cmd)
             .args(args)
@@ -89,7 +93,7 @@ fn main() {
 
         let ex = child.wait().unwrap().code().unwrap_or(-1);
         writeln!(
-            io::stderr(),
+            io::stdout(),
             "Exit: {}, Elapsed: {}",
             ex,
             duration_to_human(&start.elapsed())
