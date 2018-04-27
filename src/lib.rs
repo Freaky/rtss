@@ -3,16 +3,16 @@ use std::io::{self, BufRead, Write};
 use std::time::{Duration, Instant};
 
 /// Convert a `time::Duration` to a formatted `String` such as
-/// "15h4m5.424s" or "424ms", or "" for a zero duration.
+/// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
 pub fn duration_to_human(d: &Duration) -> String {
     let ts = d.as_secs();
-    let ms = f64::from(d.subsec_nanos()) / 1_000_000_f64;
+    let ns = d.subsec_nanos();
 
     let mut ret = String::with_capacity(10);
 
     if ts > 0 {
         let mut s = ts;
-        let mut ds = (ms / 10_f64).round() as u64;
+        let mut ds = (f64::from(ns) / 10_000_000_f64).round() as u64;
         if ds == 100 {
             // round up to the nearest decisecond
             s += 1;
@@ -35,8 +35,10 @@ pub fn duration_to_human(d: &Duration) -> String {
         }
 
         write!(ret, "{}.{:02}s", s, ds).unwrap();
-    } else if ms > 0_f64 {
-        write!(ret, "{:.1}ms", ms).unwrap();
+    } else if ns > 100_000 {
+        write!(ret, "{:.1}ms", f64::from(ns) / 1_000_000_f64).unwrap();
+    } else if ns > 100 {
+        write!(ret, "{:.1}μs", f64::from(ns) / 1_000_f64).unwrap();
     }
 
     ret
