@@ -47,7 +47,7 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
     let mut input = io::BufReader::new(input);
     let mut output = io::BufWriter::new(output);
 
-    let mut buf = vec![0_u8; 256];
+    let mut buf = Vec::with_capacity(256);
     let mut last = Instant::now();
     let mut n = 0_u64;
 
