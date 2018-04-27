@@ -17,7 +17,7 @@ of the child is the exit code of rtss:
 ```
 -% rtss sh -c "echo foo; sleep 1; echo bar >&2; sleep 1; echo baz"
      1ms          | foo
-  1.056s   1.055s | bar
+  1.056s   1.055s # bar
   2.109s   2.107s | baz
 Exit: 0, Elapsed: 2.111s
 -% rtss sh -c "echo foo; sleep 1; echo bar >&2; sleep 1; echo baz" 2>/dev/null
@@ -25,6 +25,18 @@ Exit: 0, Elapsed: 2.111s
   2.023s   2.021s | baz
 Exit: 0, Elapsed: 2.025s
 ```
+
+
+## Installation
+
+If you have Cargo installed you can install the latest version using:
+
+```
+cargo install --git https://github.com/Freaky/rtss.git
+```
+
+A proper release on crates.io will be forthcoming.
+
 
 ## Alternatives
 
