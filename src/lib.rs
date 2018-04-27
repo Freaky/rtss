@@ -5,30 +5,38 @@ use std::time::{Duration, Instant};
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.424s" or "424ms", or "" for a zero duration.
 pub fn duration_to_human(d: &Duration) -> String {
-    let mut s = d.as_secs();
-    let ms = d.subsec_nanos() / 1_000_000;
+    let ts = d.as_secs();
+    let ms = f64::from(d.subsec_nanos()) / 1_000_000_f64;
 
-    let mut ret = String::new();
+    let mut ret = String::with_capacity(10);
 
-    if s >= 86400 {
-        write!(ret, "{}d", s / 86400).unwrap();
-        s %= 86400;
-    }
+    if ts > 0 {
+        let mut s = ts;
+        let mut ds = (ms / 10_f64).round() as u64;
+        if ds == 100 {
+            // round up to the nearest decisecond
+            s += 1;
+            ds = 0;
+        }
 
-    if s >= 3600 {
-        write!(ret, "{}h", s / 3600).unwrap();
-        s %= 3600;
-    }
+        if ts >= 86400 {
+            write!(ret, "{}d", s / 86400).unwrap();
+            s %= 86400;
+        }
 
-    if s >= 60 {
-        write!(ret, "{}m", s / 60).unwrap();
-        s %= 60
-    }
+        if ts >= 3600 {
+            write!(ret, "{}h", s / 3600).unwrap();
+            s %= 3600;
+        }
 
-    if s > 0 {
-        write!(ret, "{}.{:03}s", s, ms).unwrap();
-    } else if ms > 0 {
-        write!(ret, "{}ms", ms).unwrap();
+        if ts >= 60 {
+            write!(ret, "{}m", s / 60).unwrap();
+            s %= 60
+        }
+
+        write!(ret, "{}.{:02}s", s, ds).unwrap();
+    } else if ms > 0_f64 {
+        write!(ret, "{:.1}ms", ms).unwrap();
     }
 
     ret
