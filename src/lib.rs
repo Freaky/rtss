@@ -1,6 +1,8 @@
 use std::fmt::Write as FmtWrite;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, Read, Write};
 use std::time::{Duration, Instant};
+
+const MAX_LINE: u64 = 1024 * 8;
 
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
@@ -60,21 +62,27 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
 
     let mut buf = Vec::with_capacity(256);
     let mut last = Instant::now();
+    let mut run_on = false;
     let mut n = 0_u64;
 
-    while input.read_until(b'\n', &mut buf)? > 0 {
+    while input.by_ref().take(MAX_LINE).read_until(b'\n', &mut buf)? > 0 {
         n += buf.len() as u64;
         let since_last = last.elapsed();
         let since_start = start.elapsed();
         last = Instant::now();
 
-        write!(
-            output,
-            "{:>8} {:>8} {} ",
-            duration_to_human(&since_start),
-            duration_to_human(&since_last),
-            separator
-        )?;
+        if !run_on {
+            write!(
+                output,
+                "{:>8} {:>8} {} ",
+                duration_to_human(&since_start),
+                duration_to_human(&since_last),
+                separator
+            )?;
+        }
+
+        run_on = buf.last().expect("buf can't be empty") != &b'\n';
+
         output.write_all(&buf)?;
         output.flush()?;
         buf.clear();
