@@ -6,7 +6,7 @@ use std::time::Instant;
 extern crate rtss;
 use rtss::{duration_to_human, line_timing_copy};
 
-fn ex_usage(ex: i32) {
+fn usage() {
     println!(
         "Usage: {} [-h | --help] [-v | --version] [--] [command [args]]",
         std::env::args().into_iter().next().unwrap()
@@ -15,8 +15,6 @@ fn ex_usage(ex: i32) {
     println!("Writes stdin to stdout with elapsed times prepended to each line.");
     println!();
     println!("Alternatively runs given command, with stdout and stderr filtered through rtss.");
-
-    std::process::exit(ex);
 }
 
 const VERSION: &str = "0.2";
@@ -27,7 +25,8 @@ fn main() {
     for arg in std::env::args_os().into_iter().skip(1) {
         if myargs {
             if &arg == "-h" || &arg == "--help" {
-                ex_usage(0);
+                usage();
+                std::process::exit(0);
             } else if &arg == "-v" || &arg == "--version" {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
