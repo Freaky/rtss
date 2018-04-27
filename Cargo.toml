@@ -1,6 +1,13 @@
 [package]
 name = "rtss"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Thomas Hurst <tom@hur.st>"]
+description = "A command-line tool to annotate stdout/stderr with elapsed times."
+homepage = "https://github.com/Freaky/rtss"
+repository = "https://github.com/Freaky/rtss.git"
+readme = "README.md"
+keywords = ["cli", "filter", "tool", "timestamp"]
+categories = ["command-line-utilities", "text-processing"]
+license = "MIT"
 
 [dependencies]

@@ -6,18 +6,18 @@ use std::time::Instant;
 extern crate rtss;
 use rtss::{duration_to_human, line_timing_copy};
 
+const VERSION: &str = "0.3.0";
+
 fn usage() {
     println!(
-        "Usage: {} [-h | --help] [-v | --version] [--] [command [args]]",
+        "Usage: {} [-h | --help] [-v | --version] | [--] [COMMAND [ARGS ...]]",
         std::env::args().into_iter().next().unwrap()
     );
     println!();
-    println!("Writes stdin to stdout with elapsed times prepended to each line.");
+    println!("Prepends output lines with elapsed times since program start and previous line.");
     println!();
-    println!("Alternatively runs given command, with stdout and stderr filtered through rtss.");
+    println!("Use either to wrap stdout and stderr of a given command, or as a filter.");
 }
-
-const VERSION: &str = "0.2";
 
 fn main() {
     let mut command = vec![];
