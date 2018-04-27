@@ -50,31 +50,29 @@ fn main() {
             writeln!(io::stderr(), "{:?}", e).ok();
         }
         println!("Elapsed: {}", duration_to_human(&start.elapsed()));
-    } else {
-        if let Some((cmd, args)) = command.split_first() {
-            let mut child = Command::new(cmd)
-                .args(args)
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::piped())
-                .spawn()
-                .expect("Failed to spawn child");
+    } else if let Some((cmd, args)) = command.split_first() {
+        let mut child = Command::new(cmd)
+            .args(args)
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Failed to spawn child");
 
-            {
-                let mut stdin = child.stdout.as_mut().unwrap();
+        {
+            let mut stdin = child.stdout.as_mut().unwrap();
 
-                if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, &start) {
-                    writeln!(io::stderr(), "{:?}", e).ok();
-                }
+            if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, &start) {
+                writeln!(io::stderr(), "{:?}", e).ok();
             }
-
-            let ex = child.wait().unwrap().code().unwrap_or(-1);
-            println!(
-                "Exit: {}, Elapsed: {}",
-                ex,
-                duration_to_human(&start.elapsed())
-            );
-
-            std::process::exit(ex);
         }
+
+        let ex = child.wait().unwrap().code().unwrap_or(-1);
+        println!(
+            "Exit: {}, Elapsed: {}",
+            ex,
+            duration_to_human(&start.elapsed())
+        );
+
+        std::process::exit(ex);
     }
 }
