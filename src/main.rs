@@ -24,22 +24,21 @@ const VERSION: &str = "0.2";
 fn main() {
     let mut command = vec![];
     let mut myargs = true;
-    for arg in std::env::args().into_iter().skip(1) {
-        match arg.as_ref() {
-            "-h" | "--help" if myargs => {
+    for arg in std::env::args_os().into_iter().skip(1) {
+        if myargs {
+            if &arg == "-h" || &arg == "--help" {
                 ex_usage(0);
-            }
-            "-v" | "--version" if myargs => {
+            } else if &arg == "-v" || &arg == "--version" {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
-            }
-            "--" if myargs => {
+            } else if &arg == "--" {
                 myargs = false;
-            }
-            arg => {
+            } else {
                 myargs = false;
-                command.push(arg.to_string());
+                command.push(arg);
             }
+        } else {
+            command.push(arg);
         }
     }
 
