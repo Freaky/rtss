@@ -35,6 +35,7 @@ fn main() {
                 myargs = false;
             }
             arg => {
+                myargs = false;
                 command.push(arg.to_string());
             }
         }
