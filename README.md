@@ -1,7 +1,9 @@
-# rtss -- timestamp standard input
+# rtss — Relative TimeStamps for Stuff
 
-`rtss` reads lines from stdin, and writes them out to stdout prepended with the
-total elapsed time and time since the previous line.  Like so:
+`rtss` annotates its output with relative durations between consecutive lines and
+since program start.
+
+It can be used as a filter in a pipeline:
 
 ```
 -% cargo build --release 2>&1 | rtss
@@ -10,9 +12,9 @@ total elapsed time and time since the previous line.  Like so:
    3.02s    exit code: 0
 ```
 
-It can also spawn its own child commands.  stdin is redirected to the child,
-stdout and stderr are piped into rtss' own stdout and stderr, and the exit code
-of the child is the exit code of rtss:
+It can also directly run commands, annotating both stdout and stderr with durations.
+stdin is passed through to the child process, and its exit code will become `rtss`'
+own exit code:
 
 ```
 -% rtss sh -c "echo foo; echo bar; sleep 1; echo moo >&2; sleep 1; echo baz; exit 64"
@@ -31,16 +33,32 @@ zsh: exit 64    rtss sh -c
 zsh: exit 64    rtss sh -c
 ```
 
+The core of `rtss`; copying one IO to another with timestamps, and pretty-printing
+`Durations`, is exposed as a library for use in other programs.
+
 
 ## Installation
 
-If you have Cargo installed you can install the latest version using:
+If you have Cargo installed you can install the latest release with:
+
+```
+cargo install rtss
+```
+
+You can also install the latest bleeding-edge version using:
 
 ```
 cargo install --git https://github.com/Freaky/rtss.git
 ```
 
-A proper release on crates.io will be forthcoming.
+Alternatively you can clone and build manually without installing:
+
+```
+git clone https://github.com/Freaky/rtss.git &&
+cd rtss &&
+cargo build --release &&
+target/release/rtss echo It works
+```
 
 
 ## Alternatives
