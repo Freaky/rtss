@@ -72,12 +72,12 @@ fn main() {
                 thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, &start))
             };
 
-            if let Err(e) = out.join().expect("stdout thread paniced") {
-                writeln!(io::stderr(), "Error on stdout: {:?}", e).ok();
-            }
-
             if let Err(e) = err.join().expect("stderr thread paniced") {
                 writeln!(io::stderr(), "Error on stderr: {:?}", e).ok();
+            }
+
+            if let Err(e) = out.join().expect("stdout thread paniced") {
+                writeln!(io::stderr(), "Error on stdout: {:?}", e).ok();
             }
         }
 
