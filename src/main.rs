@@ -1,5 +1,6 @@
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
+use std::thread;
 use std::time::Instant;
 
 extern crate rtss;
@@ -61,7 +62,6 @@ fn main() {
             .expect("Failed to spawn child");
 
         {
-            use std::thread;
             let out = {
                 let mut child_stdout = child.stdout.take().unwrap();
                 thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, &start))
