@@ -47,14 +47,18 @@ fn main() {
 
     if command.is_empty() {
         let mut stdin = io::stdin();
+        let mut ex = 0;
         if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, '|', &start) {
             writeln!(io::stderr(), "{:?}", e).ok();
+            ex = 64 + e.raw_os_error().unwrap_or(0);
         }
         writeln!(
             io::stdout(),
-            "Elapsed: {}",
-            duration_to_human(&start.elapsed())
+            "{}    exit {}",
+            duration_to_human(&start.elapsed()),
+            ex
         ).ok();
+        exit(ex);
     } else if let Some((cmd, args)) = command.split_first() {
         let mut child = Command::new(cmd)
             .args(args)
@@ -85,14 +89,15 @@ fn main() {
             writeln!(io::stderr(), "stdout: {}", e).ok();
         }
 
-        let ex = child.wait().unwrap().code().unwrap_or(-1);
+        let status = child.wait().expect("waitpid");
+
         writeln!(
             io::stdout(),
-            "Exit: {}, Elapsed: {}",
-            ex,
-            duration_to_human(&start.elapsed())
+            "{:>8}    {}",
+            duration_to_human(&start.elapsed()),
+            status
         ).ok();
 
-        exit(ex);
+        exit(status.code().unwrap_or(64));
     }
 }
