@@ -77,9 +77,10 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
         n += buf.len() as u64;
 
         if !run_on {
-            duration_to_human_replace(&start.elapsed(), &mut start_duration);
-            duration_to_human_replace(&last.elapsed(), &mut line_duration);
-            last = Instant::now();
+            let now = Instant::now();
+            duration_to_human_replace(&now.duration_since(*start), &mut start_duration);
+            duration_to_human_replace(&now.duration_since(last), &mut line_duration);
+            last = now;
             write!(
                 output,
                 "{:>8} {:>8} {} ",
