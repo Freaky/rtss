@@ -13,7 +13,8 @@ fn ex_usage(ex: i32) {
     );
     println!();
     println!("Writes stdin to stdout with elapsed times prepended to each line.");
-    println!("Alternatively runs given command, stdout filtered through rtss.");
+    println!();
+    println!("Alternatively runs given command, with stdout and stderr filtered through rtss.");
 
     std::process::exit(ex);
 }
