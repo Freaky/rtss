@@ -1,5 +1,5 @@
 use std::io::{self, Write};
-use std::process::{Command, Stdio};
+use std::process::{exit, Command, Stdio};
 use std::thread;
 use std::time::Instant;
 
@@ -53,13 +53,19 @@ fn main() {
         }
         println!("Elapsed: {}", duration_to_human(&start.elapsed()));
     } else if let Some((cmd, args)) = command.split_first() {
-        let mut child = Command::new(cmd)
+        let mut child = match Command::new(cmd)
             .args(args)
             .stdin(Stdio::inherit())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("Failed to spawn child");
+        {
+            Ok(child) => child,
+            Err(e) => {
+                writeln!(stderr, "{}: {}", cmd.to_string_lossy(), e).ok();
+                exit(64 + e.raw_os_error().unwrap_or(0));
+            }
+        };
 
         {
             let out = {
@@ -72,12 +78,12 @@ fn main() {
                 thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, &start))
             };
 
-            if let Err(e) = err.join().expect("stderr thread paniced") {
-                writeln!(io::stderr(), "Error on stderr: {:?}", e).ok();
+            if let Err(e) = err.join().expect("stderr thread panicked") {
+                writeln!(io::stderr(), "stderr: {}", e).ok();
             }
 
-            if let Err(e) = out.join().expect("stdout thread paniced") {
-                writeln!(io::stderr(), "Error on stdout: {:?}", e).ok();
+            if let Err(e) = out.join().expect("stdout thread panicked") {
+                writeln!(io::stderr(), "stdout: {}", e).ok();
             }
         }
 
@@ -89,6 +95,6 @@ fn main() {
             duration_to_human(&start.elapsed())
         ).ok();
 
-        std::process::exit(ex);
+        exit(ex);
     }
 }
