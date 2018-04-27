@@ -48,7 +48,7 @@ fn main() {
 
     if command.is_empty() {
         let mut stdin = io::stdin();
-        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, &start) {
+        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, '|', &start) {
             writeln!(io::stderr(), "{:?}", e).ok();
         }
         println!("Elapsed: {}", duration_to_human(&start.elapsed()));
@@ -70,12 +70,12 @@ fn main() {
         {
             let out = {
                 let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
-                thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, &start))
+                thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, '|', &start))
             };
 
             let err = {
                 let mut child_stderr = child.stderr.take().expect("Failed to attach to stderr");
-                thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, &start))
+                thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, '#', &start))
             };
 
             if let Err(e) = err.join().expect("stderr thread panicked") {

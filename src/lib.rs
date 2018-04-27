@@ -35,13 +35,14 @@ pub fn duration_to_human(d: &Duration) -> String {
 }
 
 /// Copy each line from `input` to `output`, prepending the output line with
-/// elapsed time since `start` and since the previous line, until EOF or IO
-/// error.
+/// elapsed time since `start` and since the previous line, separated by `separator`
+/// until EOF or IO error.
 ///
 /// Returns the number of bytes read from `input` on success.
 pub fn line_timing_copy<R: io::Read, W: io::Write>(
     input: &mut R,
     output: &mut W,
+    separator: char,
     start: &Instant,
 ) -> io::Result<u64> {
     let mut input = io::BufReader::new(input);
@@ -59,9 +60,10 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
 
         write!(
             output,
-            "{:>8} {:>8} | ",
+            "{:>8} {:>8} {} ",
             duration_to_human(&since_start),
             duration_to_human(&since_last),
+            separator
         )?;
         output.write_all(&buf)?;
         output.flush()?;
