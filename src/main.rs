@@ -63,30 +63,31 @@ fn main() {
 
         {
             let out = {
-                let mut child_stdout = child.stdout.take().unwrap();
+                let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
                 thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, &start))
             };
 
             let err = {
-                let mut child_stderr = child.stderr.take().unwrap();
+                let mut child_stderr = child.stderr.take().expect("Failed to attach to stderr");
                 thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, &start))
             };
 
-            if let Err(e) = out.join().unwrap() {
+            if let Err(e) = out.join().expect("stdout thread paniced") {
                 writeln!(io::stderr(), "Error on stdout: {:?}", e).ok();
             }
 
-            if let Err(e) = err.join().unwrap() {
+            if let Err(e) = err.join().expect("stderr thread paniced") {
                 writeln!(io::stderr(), "Error on stderr: {:?}", e).ok();
             }
         }
 
         let ex = child.wait().unwrap().code().unwrap_or(-1);
-        println!(
+        writeln!(
+            io::stderr(),
             "Exit: {}, Elapsed: {}",
             ex,
             duration_to_human(&start.elapsed())
-        );
+        ).ok();
 
         std::process::exit(ex);
     }
