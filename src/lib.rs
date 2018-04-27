@@ -7,10 +7,17 @@ const MAX_LINE: u64 = 1024 * 8;
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
 pub fn duration_to_human(d: &Duration) -> String {
+    let mut ret = String::with_capacity(16);
+    duration_to_human_replace(&d, &mut ret);
+    ret
+}
+
+/// As duration_to_human, but replacing the contents of a user-provided `String`.
+pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
     let ts = d.as_secs();
     let ns = d.subsec_nanos();
 
-    let mut ret = String::with_capacity(10);
+    buf.clear();
 
     if ts > 0 {
         let mut s = ts;
@@ -22,28 +29,26 @@ pub fn duration_to_human(d: &Duration) -> String {
         }
 
         if ts >= 86400 {
-            write!(ret, "{}d", s / 86400).unwrap();
+            write!(buf, "{}d", s / 86400).unwrap();
             s %= 86400;
         }
 
         if ts >= 3600 {
-            write!(ret, "{}h", s / 3600).unwrap();
+            write!(buf, "{}h", s / 3600).unwrap();
             s %= 3600;
         }
 
         if ts >= 60 {
-            write!(ret, "{}m", s / 60).unwrap();
+            write!(buf, "{}m", s / 60).unwrap();
             s %= 60
         }
 
-        write!(ret, "{}.{:02}s", s, cs).unwrap();
+        write!(buf, "{}.{:02}s", s, cs).unwrap();
     } else if ns > 100_000 {
-        write!(ret, "{:.1}ms", f64::from(ns) / 1_000_000_f64).unwrap();
+        write!(buf, "{:.1}ms", f64::from(ns) / 1_000_000_f64).unwrap();
     } else if ns > 100 {
-        write!(ret, "{:.1}μs", f64::from(ns) / 1_000_f64).unwrap();
+        write!(buf, "{:.1}μs", f64::from(ns) / 1_000_f64).unwrap();
     }
-
-    ret
 }
 
 /// Copy each line from `input` to `output`, prepending the output line with
@@ -60,24 +65,25 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
     let mut input = io::BufReader::new(input);
     let mut output = io::BufWriter::new(output);
 
-    let mut buf = Vec::with_capacity(256);
+    let mut start_duration = String::with_capacity(16);
+    let mut line_duration = String::with_capacity(16);
+
+    let mut buf = Vec::with_capacity(MAX_LINE as usize);
     let mut last = Instant::now();
     let mut run_on = false;
     let mut n = 0_u64;
 
     while input.by_ref().take(MAX_LINE).read_until(b'\n', &mut buf)? > 0 {
         n += buf.len() as u64;
-        let since_last = last.elapsed();
-        let since_start = start.elapsed();
-        last = Instant::now();
 
         if !run_on {
+            duration_to_human_replace(&start.elapsed(), &mut start_duration);
+            duration_to_human_replace(&last.elapsed(), &mut line_duration);
+            last = Instant::now();
             write!(
                 output,
                 "{:>8} {:>8} {} ",
-                duration_to_human(&since_start),
-                duration_to_human(&since_last),
-                separator
+                start_duration, line_duration, separator
             )?;
         }
 

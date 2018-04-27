@@ -1,6 +1,6 @@
 [package]
 name = "rtss"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Thomas Hurst <tom@hur.st>"]
 description = "A command-line tool to annotate stdout/stderr with elapsed times."
 homepage = "https://github.com/Freaky/rtss"

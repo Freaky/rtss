@@ -6,7 +6,7 @@ use std::time::Instant;
 extern crate rtss;
 use rtss::{duration_to_human, line_timing_copy};
 
-const VERSION: &str = "0.3.0";
+const VERSION: &str = "0.3.1";
 
 fn usage() {
     println!(
