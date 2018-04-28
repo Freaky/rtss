@@ -7,9 +7,11 @@ It can be used as a filter in a pipeline:
 
 ```
 -% cargo build --release 2>&1 | rtss
- 261.7ms  261.6ms |    Compiling rtss v0.2.0 (file:///home/freaky/code/rtss)
-   3.02s    2.76s |     Finished release [optimized] target(s) in 3.1 secs
-   3.02s    exit code: 0
+ 274.1ms  274.1ms |    Compiling libc v0.2.40
+   1.50s    1.22s |    Compiling memchr v2.0.1
+   2.28s  780.8ms |    Compiling rtss v0.5.0 (file:///home/freaky/code/rtss)
+   5.18s    2.90s |     Finished release [optimized] target(s) in 5.17 secs
+   5.18s    exit code: 0
 ```
 
 It can also directly run commands, annotating both stdout and stderr with durations.
@@ -18,23 +20,27 @@ own exit code:
 
 ```
 -% rtss sh -c "echo foo; echo bar; sleep 1; echo moo >&2; sleep 1; echo baz; exit 64"
-   1.7ms    0.8ms | foo
-   1.7ms   42.5μs | bar
-   1.07s    1.06s # moo
-   2.07s    2.07s | baz
-   2.07s    exit code: 64
+   1.7ms    1.7ms | foo
+   1.7ms          | bar
+   1.00s    1.00s # moo
+   2.03s    2.03s | baz
+   2.03s    exit code: 64
 zsh: exit 64    rtss sh -c
 
 -% rtss sh -c "echo foo; echo bar; sleep 1; echo moo >&2; sleep 1; echo baz; exit 64" 2>/dev/null
-   1.6ms    1.0ms | foo
-   1.6ms   51.1μs | bar
-   2.06s    2.06s | baz
-   2.06s    exit code: 64
-zsh: exit 64    rtss sh -c
+   1.9ms    1.9ms | foo
+   1.9ms          | bar
+   2.05s    2.04s | baz
+   2.05s    exit code: 64
+zsh: exit 64    rtss sh -c  2> /dev/null
 ```
 
-The core of `rtss` — copying one IO to another with timestamps, and pretty-printing
-`Durations` — is exposed as a library for use in other programs.
+Blank durations indicate lines were read in a single `read()`.
+
+The core of `rtss` — an `io::Write` implementation with timestamped output, a function
+to copy one IO to another using it, and one to pretty-print `Durations` — is exposed
+as a library for use in other programs.  Its interface should be considered unstable
+until version 1.
 
 
 ## Installation
