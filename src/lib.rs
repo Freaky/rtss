@@ -71,7 +71,7 @@ pub struct RtssWriter<W> {
 }
 
 impl<W: io::Write> RtssWriter<W> {
-    /// Create a new `RtssWriter`, with a given start time and delimiter separating
+    /// Create a new `RtssWriter`, with a given start time, and delimiter separating
     /// the prefix and content.
     pub fn new(inner: W, separator: char, now: &Instant) -> Self {
         Self {
