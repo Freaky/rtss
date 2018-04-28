@@ -14,19 +14,20 @@ pub fn duration_to_human(d: &Duration) -> String {
 
 /// As duration_to_human, but replacing the contents of a user-provided `String`.
 pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
-    let ts = d.as_secs();
+    let mut ts = d.as_secs();
     let ns = d.subsec_nanos();
 
     buf.clear();
 
     if ts > 0 {
-        let mut s = ts;
-        let mut cs = (f64::from(ns) / 10_000_000_f64).round() as u64;
+        let mut cs = (f64::from(ns) / 10_000_000_f64).round() as u8;
         if cs == 100 {
             // round up to the nearest centisecond
-            s += 1;
+            ts += 1;
             cs = 0;
         }
+
+        let mut s = ts;
 
         if ts >= 86400 {
             write!(buf, "{}d", s / 86400).unwrap();
