@@ -77,8 +77,8 @@ impl<W: io::Write> RtssWriter<W> {
         Self {
             inner,
             separator,
-            start: now.clone(),
-            last: now.clone(),
+            start: *now,
+            last: *now,
             at_eol: true,
         }
     }
