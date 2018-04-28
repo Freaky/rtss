@@ -1,11 +1,17 @@
+//! rtss - Relative TimeStamps for Stuff.
+//!
+//! An `io::Write` implementation which prefixes each line with a timestamp since
+//! a start time, and the duration since the previous line, if any.
+//!
+//! Also a couple of utility functions for formatting `Duration`, and copying from
+//! one IO to another.
+
 use std::fmt::Write as FmtWrite;
-use std::io::{self, ErrorKind, Write};
+use std::io;
 use std::time::{Duration, Instant};
 
 extern crate memchr;
 use memchr::memchr;
-
-const BUF_SIZE: usize = 1024 * 8;
 
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
@@ -55,71 +61,98 @@ pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
     }
 }
 
+/// A writer that prefixes all lines with relative timestamps.
+pub struct RtssWriter<W> {
+    inner: W,
+    separator: char,
+    start: Instant,
+    last: Instant,
+    at_eol: bool,
+}
+
+impl<W: io::Write> RtssWriter<W> {
+    /// Create a new `RtssWriter`, with a given start time and delimiter separating
+    /// the prefix and content.
+    pub fn new(inner: W, separator: char, now: &Instant) -> Self {
+        Self {
+            inner,
+            separator,
+            start: now.clone(),
+            last: now.clone(),
+            at_eol: true,
+        }
+    }
+}
+
+impl<W: io::Write> io::Write for RtssWriter<W> {
+    /// Writes the contents of `buf` to the underlying writer, with time annotations
+    /// for any new lines.
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let now = Instant::now();
+        let start_duration = duration_to_human(&now.duration_since(self.start));
+        let line_duration = duration_to_human(&now.duration_since(self.last));
+
+        let pfx_start = format!(
+            "{:>8} {:>8} {} ",
+            start_duration, line_duration, self.separator
+        );
+        let pfx_rest = format!("{:>8} {:>8} {} ", start_duration, "", self.separator);
+
+        let mut pos: usize = 0;
+        let mut saw_eol = false;
+        let mut first = true;
+
+        let n = buf.len();
+
+        while pos < n {
+            if self.at_eol {
+                if first {
+                    self.inner.write_all(pfx_start.as_bytes())?;
+                    first = false;
+                } else {
+                    self.inner.write_all(pfx_rest.as_bytes())?;
+                }
+            }
+
+            if let Some(newline) = memchr(b'\n', &buf[pos..n]) {
+                saw_eol = true;
+                self.at_eol = true;
+                self.inner.write_all(&buf[pos..(pos + newline + 1)])?;
+                pos += newline + 1;
+            } else {
+                self.at_eol = false;
+                self.inner.write_all(&buf[pos..n])?;
+                break;
+            }
+        }
+
+        self.inner.flush()?;
+
+        if saw_eol {
+            self.last = now;
+        }
+
+        Ok(n)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
 /// Copy each line from `input` to `output`, prepending the output line with
 /// elapsed time since `start` and since the previous line, separated by `separator`
 /// until EOF or IO error.
 ///
 /// Returns the number of bytes read from `input` on success.
 pub fn line_timing_copy<R: io::Read, W: io::Write>(
-    input: &mut R,
+    mut input: &mut R,
     output: &mut W,
     separator: char,
     start: &Instant,
 ) -> io::Result<u64> {
-    let mut output = io::BufWriter::new(output);
+    let output = io::BufWriter::new(output);
+    let mut output = RtssWriter::new(output, separator, start);
 
-    let mut start_duration = String::with_capacity(16);
-    let mut line_duration = String::with_capacity(16);
-
-    let mut buf = vec![0_u8; BUF_SIZE];
-    let mut last = start.clone();
-    let mut total = 0_u64;
-
-    let mut at_eol = true;
-
-    loop {
-        match input.read(&mut buf) {
-            Ok(0) => return Ok(total),
-            Ok(n) => {
-                let now = Instant::now();
-                duration_to_human_replace(&now.duration_since(*start), &mut start_duration);
-                duration_to_human_replace(&now.duration_since(last), &mut line_duration);
-
-                total += n as u64;
-
-                let mut pos: usize = 0;
-                let mut saw_eol = false;
-
-                while pos < n {
-                    if at_eol {
-                        write!(
-                            output,
-                            "{:>8} {:>8} {} ",
-                            start_duration, line_duration, separator
-                        )?;
-                        line_duration.clear();
-                    }
-
-                    if let Some(newline) = memchr(b'\n', &buf[pos..n]) {
-                        saw_eol = true;
-                        at_eol = true;
-                        output.write_all(&buf[pos..(pos + newline + 1)])?;
-                        pos += newline + 1;
-                    } else {
-                        at_eol = false;
-                        output.write_all(&buf[pos..n])?;
-                        break;
-                    }
-                }
-
-                output.flush()?;
-
-                if saw_eol {
-                    last = now;
-                }
-            }
-            Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
-            Err(e) => return Err(e),
-        }
-    }
+    io::copy(&mut input, &mut output)
 }
