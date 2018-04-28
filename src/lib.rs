@@ -1,8 +1,11 @@
 use std::fmt::Write as FmtWrite;
-use std::io::{self, BufRead, Read, Write};
+use std::io::{self, ErrorKind, Write};
 use std::time::{Duration, Instant};
 
-const MAX_LINE: u64 = 1024 * 8;
+extern crate memchr;
+use memchr::memchr;
+
+const BUF_SIZE: usize = 1024 * 8;
 
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
@@ -63,38 +66,60 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
     separator: char,
     start: &Instant,
 ) -> io::Result<u64> {
-    let mut input = io::BufReader::new(input);
     let mut output = io::BufWriter::new(output);
 
     let mut start_duration = String::with_capacity(16);
     let mut line_duration = String::with_capacity(16);
 
-    let mut buf = Vec::with_capacity(MAX_LINE as usize);
-    let mut last = Instant::now();
-    let mut run_on = false;
-    let mut n = 0_u64;
+    let mut buf = vec![0_u8; BUF_SIZE];
+    let mut last = start.clone();
+    let mut total = 0_u64;
 
-    while input.by_ref().take(MAX_LINE).read_until(b'\n', &mut buf)? > 0 {
-        n += buf.len() as u64;
+    let mut at_eol = true;
 
-        if !run_on {
-            let now = Instant::now();
-            duration_to_human_replace(&now.duration_since(*start), &mut start_duration);
-            duration_to_human_replace(&now.duration_since(last), &mut line_duration);
-            last = now;
-            write!(
-                output,
-                "{:>8} {:>8} {} ",
-                start_duration, line_duration, separator
-            )?;
+    loop {
+        match input.read(&mut buf) {
+            Ok(0) => return Ok(total),
+            Ok(n) => {
+                let now = Instant::now();
+                duration_to_human_replace(&now.duration_since(*start), &mut start_duration);
+                duration_to_human_replace(&now.duration_since(last), &mut line_duration);
+
+                total += n as u64;
+
+                let mut pos: usize = 0;
+                let mut saw_eol = false;
+
+                while pos < n {
+                    if at_eol {
+                        write!(
+                            output,
+                            "{:>8} {:>8} {} ",
+                            start_duration, line_duration, separator
+                        )?;
+                        line_duration.clear();
+                    }
+
+                    if let Some(newline) = memchr(b'\n', &buf[pos..n]) {
+                        saw_eol = true;
+                        at_eol = true;
+                        output.write_all(&buf[pos..(pos + newline + 1)])?;
+                        pos += newline + 1;
+                    } else {
+                        at_eol = false;
+                        output.write_all(&buf[pos..n])?;
+                        break;
+                    }
+                }
+
+                output.flush()?;
+
+                if saw_eol {
+                    last = now;
+                }
+            }
+            Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
         }
-
-        run_on = buf.last().expect("buf can't be empty") != &b'\n';
-
-        output.write_all(&buf)?;
-        output.flush()?;
-        buf.clear();
     }
-
-    Ok(n)
 }
