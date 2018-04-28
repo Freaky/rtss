@@ -33,8 +33,8 @@ zsh: exit 64    rtss sh -c
 zsh: exit 64    rtss sh -c
 ```
 
-The core of `rtss`; copying one IO to another with timestamps, and pretty-printing
-`Durations`, is exposed as a library for use in other programs.
+The core of `rtss` — copying one IO to another with timestamps, and pretty-printing
+`Durations` — is exposed as a library for use in other programs.
 
 
 ## Installation
