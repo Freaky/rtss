@@ -130,14 +130,6 @@ fn main() {
             thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, '#', &start))
         };
 
-        if let Err(e) = err.join().expect("stderr thread panicked") {
-            writeln!(io::stderr(), "stderr: {}", e).ok();
-        }
-
-        if let Err(e) = out.join().expect("stdout thread panicked") {
-            writeln!(io::stderr(), "stdout: {}", e).ok();
-        }
-
         let status = child.wait().expect("waitpid");
 
         writeln!(
@@ -146,6 +138,16 @@ fn main() {
             duration_to_human(&start.elapsed()),
             status
         ).ok();
+
+        if let Err(e) = err.join().expect("stderr thread panicked") {
+            writeln!(io::stderr(), "stderr: {}", e).ok();
+        }
+
+        if !use_tty {
+            if let Err(e) = out.join().expect("stdout thread panicked") {
+                writeln!(io::stderr(), "stdout: {}", e).ok();
+            }
+        }
 
         exit(status.code().unwrap_or(64));
     }
