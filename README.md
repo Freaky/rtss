@@ -37,11 +37,33 @@ zsh: exit 64    rtss sh -c  2> /dev/null
 
 Blank durations indicate lines were read in a single `read()`.
 
+## API
+
 The core of `rtss` — an `io::Write` implementation with timestamped output, a function
 to copy one IO to another using it, and one to pretty-print `Durations` — is exposed
 as a library for use in other programs.  Its interface should be considered unstable
 until version 1.
 
+```
+use std::io::{self, Write};
+use std::time::Instant;
+
+extern crate rtss;
+use rtss::RtssWriter;
+
+fn main() {
+    let mut writer = RtssWriter::new(io::stdout(), '|', &Instant::now());
+    writer.write(b"Hello!\n").unwrap();
+    writer.write(b"World!\n").unwrap();
+}
+```
+
+Output:
+
+```
+   0.2μs    0.2μs | Hello!
+  84.7μs   84.6μs | World!
+```
 
 ## Installation
 
