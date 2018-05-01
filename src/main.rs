@@ -3,6 +3,8 @@ use std::process::{exit, Command, Stdio};
 use std::thread;
 use std::time::Instant;
 
+extern crate libc;
+
 extern crate rtss;
 use rtss::{duration_to_human, line_timing_copy};
 
@@ -60,10 +62,28 @@ fn main() {
         ).ok();
         exit(ex);
     } else if let Some((cmd, args)) = command.split_first() {
+        let mut master: libc::c_int = 0;
+        let mut slave: libc::c_int = 0;
+        let pty = unsafe {
+            libc::openpty(
+                &mut master,
+                &mut slave,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        };
+
+        println!("{:?}", pty);
+        if pty != 0 {
+            panic!("Couldn't open pty");
+        }
+        use std::os::unix::io::FromRawFd;
+
         let mut child = Command::new(cmd)
             .args(args)
             .stdin(Stdio::inherit())
-            .stdout(Stdio::piped())
+            .stdout(unsafe { Stdio::from_raw_fd(slave) })
             .stderr(Stdio::piped())
             .spawn()
             .unwrap_or_else(|e| {
@@ -72,7 +92,8 @@ fn main() {
             });
 
         let out = {
-            let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
+            // let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
+            let mut child_stdout = unsafe { std::fs::File::from_raw_fd(master) };
             thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, '|', &start))
         };
 

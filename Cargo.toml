@@ -12,3 +12,4 @@ license = "MIT"
 
 [dependencies]
 memchr = "2"
+libc = "0.2.40"
