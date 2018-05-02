@@ -12,7 +12,7 @@ extern crate libc;
 extern crate rtss;
 use rtss::{duration_to_human, line_timing_copy};
 
-const VERSION: &str = "0.5.0";
+const VERSION: &str = "0.6.0";
 
 fn usage() {
     println!(
