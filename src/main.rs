@@ -16,15 +16,18 @@ const VERSION: &str = "0.5.0";
 
 fn usage() {
     println!(
-        "Usage: {} [-h | --help] [-v | --version] | [--tty | --pty] [--] [COMMAND [ARGS ...]]",
-        std::env::args().into_iter().next().unwrap()
+        "Usage: {} [-h | --help] [-v | --version] | {}[--] [COMMAND [ARGS ...]]",
+        std::env::args().into_iter().next().unwrap(),
+        if cfg!(unix) { "[--tty | --pty] " } else { "" }
     );
     println!();
     println!("Prepends output lines with elapsed times since program start and previous line.");
     println!();
     println!("Use either to wrap stdout and stderr of a given command, or as a filter.");
-    println!();
-    println!("Use --pty/--tty to unbuffer commands like tcpdump when ran under rtss.")
+    if cfg!(unix) {
+        println!();
+        println!("Use --pty/--tty to unbuffer commands like tcpdump when ran under rtss.");
+    }
 }
 
 #[cfg(unix)]
