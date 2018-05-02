@@ -45,17 +45,16 @@ to pipes, the `--pty` (aka `--tty`) option will, on supported platforms, run the
 under a pseudo-terminal.
 
 ```
--$ rtss tcpdump
-  26.3ms   26.3ms # tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
-  26.3ms   68.5μs # listening on igb0, link-type EN10MB (Ethernet), capture size 262144 bytes
-   3.17s    3.17s | 00:51:15.288326 ...
-   3.17s          | 00:51:15.288426 ...
+-% rtss zpool status 5
+rtss zpool status 5
+  10.01s   10.01s |   pool: rpool
+  10.01s          |  state: ONLINE
+  10.01s          |   scan: scrub repaired 0 in 1h7m with 0 errors on Wed May  2 04:00:38 2018
 
--$ rtss --pty tcpdump
-  30.1ms   30.1ms # tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
-  30.1ms   59.1μs # listening on igb0, link-type EN10MB (Ethernet), capture size 262144 bytes
-  32.2ms   32.2ms | 00:52:32.893227 ...
-  32.2ms   43.9μs | 00:52:32.893329 ...
+-% rtss --pty zpool status 5
+   4.2ms    4.2ms |   pool: rpool
+   4.2ms          |  state: ONLINE
+   4.5ms    0.3ms |   scan: scrub repaired 0 in 1h7m with 0 errors on Wed May  2 04:00:38 2018
 ```
 
 ## API
