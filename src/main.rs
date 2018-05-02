@@ -153,7 +153,10 @@ fn main() {
         }
 
         if let Err(e) = out.join().expect("stdout thread panicked") {
-            writeln!(io::stderr(), "stdout: {}", e).ok();
+            // suppress EIO in pty mode (thrown by Linux on normal exit)
+            if !use_tty || e.raw_os_error().unwrap_or(0) != 5 {
+                writeln!(io::stderr(), "stdout: {}", e).ok();
+            }
         }
 
         exit(status.code().unwrap_or(64));
