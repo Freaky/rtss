@@ -28,7 +28,7 @@ fn usage() {
 }
 
 #[cfg(unix)]
-fn attach_tty(child: &mut Command) -> File {
+fn attach_tty(child: &mut Command) -> (File, File) {
     let mut master: libc::c_int = 0;
     let mut slave: libc::c_int = 0;
 
@@ -47,11 +47,11 @@ fn attach_tty(child: &mut Command) -> File {
     }
 
     child.stdout(unsafe { Stdio::from_raw_fd(slave) });
-    unsafe { File::from_raw_fd(master) }
+    unsafe { (File::from_raw_fd(master), File::from_raw_fd(slave)) }
 }
 
 #[cfg(not(unix))]
-fn attach_tty(_child: &mut Command) -> File {
+fn attach_tty(_child: &mut Command) -> (File, File) {
     unimplemented!();
 }
 
@@ -105,7 +105,7 @@ fn main() {
             .stdin(Stdio::inherit())
             .stderr(Stdio::piped());
 
-        let mut tty: Option<File> = None;
+        let mut tty: Option<(File, File)> = None;
 
         if use_tty {
             tty = Some(attach_tty(&mut child));
@@ -118,8 +118,9 @@ fn main() {
             exit(64 + e.raw_os_error().unwrap_or(0));
         });
 
-        let out = if let Some(mut child_stdout) = tty {
-            thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, '|', &start))
+        let out = if let Some((mut master, mut slave)) = tty {
+            drop(slave);
+            thread::spawn(move || line_timing_copy(&mut master, &mut stdout, '|', &start))
         } else {
             let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
             thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, '|', &start))
@@ -143,10 +144,8 @@ fn main() {
             writeln!(io::stderr(), "stderr: {}", e).ok();
         }
 
-        if !use_tty {
-            if let Err(e) = out.join().expect("stdout thread panicked") {
-                writeln!(io::stderr(), "stdout: {}", e).ok();
-            }
+        if let Err(e) = out.join().expect("stdout thread panicked") {
+            writeln!(io::stderr(), "stdout: {}", e).ok();
         }
 
         exit(status.code().unwrap_or(64));
