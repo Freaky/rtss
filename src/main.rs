@@ -32,6 +32,7 @@ fn usage() {
 
 #[cfg(unix)]
 fn attach_tty(child: &mut Command) -> (File, File) {
+    use std::os::unix::process::CommandExt;
     let mut master: libc::c_int = 0;
     let mut slave: libc::c_int = 0;
 
@@ -50,6 +51,10 @@ fn attach_tty(child: &mut Command) -> (File, File) {
     }
 
     child.stdout(unsafe { Stdio::from_raw_fd(slave) });
+    child.before_exec(move || {
+        drop(unsafe { File::from_raw_fd(master) });
+        Ok(())
+    });
     unsafe { (File::from_raw_fd(master), File::from_raw_fd(slave)) }
 }
 
