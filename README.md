@@ -41,7 +41,8 @@ Blank durations indicate lines were read in a single `read()`.
 ### PTY mode
 
 For programs that buffer their output or otherwise alter their behaviour when connected
-to pipes, programs can be executed with a pseudo-terminal on supporting platforms:
+to pipes, the `--pty` (aka `--tty`) option will, on supported platforms, run the command
+under a pseudo-terminal.
 
 ```
 -$ rtss tcpdump
@@ -56,7 +57,6 @@ to pipes, programs can be executed with a pseudo-terminal on supporting platform
   32.2ms   32.2ms | 00:52:32.893227 ...
   32.2ms   43.9μs | 00:52:32.893329 ...
 ```
-
 
 ## API
 
