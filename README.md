@@ -37,6 +37,27 @@ zsh: exit 64    rtss sh -c  2> /dev/null
 
 Blank durations indicate lines were read in a single `read()`.
 
+
+### PTY mode
+
+For programs that buffer their output or otherwise alter their behaviour when connected
+to pipes, programs can be executed with a pseudo-terminal on supporting platforms:
+
+```
+-$ rtss tcpdump
+  26.3ms   26.3ms # tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+  26.3ms   68.5μs # listening on igb0, link-type EN10MB (Ethernet), capture size 262144 bytes
+   3.17s    3.17s | 00:51:15.288326 ...
+   3.17s          | 00:51:15.288426 ...
+
+-$ rtss --pty tcpdump
+  30.1ms   30.1ms # tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+  30.1ms   59.1μs # listening on igb0, link-type EN10MB (Ethernet), capture size 262144 bytes
+  32.2ms   32.2ms | 00:52:32.893227 ...
+  32.2ms   43.9μs | 00:52:32.893329 ...
+```
+
+
 ## API
 
 The core of `rtss` — an `io::Write` implementation with timestamped output, a function
