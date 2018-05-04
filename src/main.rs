@@ -67,6 +67,7 @@ fn main() {
     let mut command = vec![];
     let mut myargs = true;
     let mut use_tty = false;
+    let mut sortable = false;
     for arg in std::env::args_os().into_iter().skip(1) {
         if myargs {
             if &arg == "-h" || &arg == "--help" {
@@ -75,6 +76,8 @@ fn main() {
             } else if &arg == "-v" || &arg == "--version" {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
+            } else if &arg == "--sortable" {
+                sortable = true;
             } else if cfg!(unix) && (&arg == "--pty" || &arg == "--tty") {
                 use_tty = true;
             } else if &arg == "--" {
@@ -95,7 +98,7 @@ fn main() {
     if command.is_empty() {
         let mut stdin = io::stdin();
         let mut ex = 0;
-        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, '|', &start) {
+        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, sortable, '|', &start) {
             writeln!(io::stderr(), "{:?}", e).ok();
             ex = 64 + e.raw_os_error().unwrap_or(0);
         }
@@ -128,15 +131,19 @@ fn main() {
 
         let out = if let Some((mut master, mut slave)) = tty {
             drop(slave);
-            thread::spawn(move || line_timing_copy(&mut master, &mut stdout, '|', &start))
+            thread::spawn(move || line_timing_copy(&mut master, &mut stdout, sortable, '|', &start))
         } else {
             let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
-            thread::spawn(move || line_timing_copy(&mut child_stdout, &mut stdout, '|', &start))
+            thread::spawn(move || {
+                line_timing_copy(&mut child_stdout, &mut stdout, sortable, '|', &start)
+            })
         };
 
         let err = {
             let mut child_stderr = child.stderr.take().expect("Failed to attach to stderr");
-            thread::spawn(move || line_timing_copy(&mut child_stderr, &mut stderr, '#', &start))
+            thread::spawn(move || {
+                line_timing_copy(&mut child_stderr, &mut stderr, sortable, '#', &start)
+            })
         };
 
         let status = child.wait().expect("waitpid");

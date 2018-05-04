@@ -13,12 +13,15 @@ use std::time::{Duration, Instant};
 extern crate memchr;
 use memchr::memchr;
 
+/// Convert a `time::Duration` to a formatted `String` sortable
+/// lexographically like "15:04:05.421224"
 pub fn duration_to_sortable(d: &Duration) -> String {
     let mut ret = String::with_capacity(16);
     duration_to_sortable_replace(&d, &mut ret);
     ret
 }
 
+/// As `duration_to_sortable`, but replacing the contents of the provided `String`.
 pub fn duration_to_sortable_replace(d: &Duration, buf: &mut String) {
     let ts = d.as_secs();
     let us = d.subsec_nanos() / 1000;
@@ -83,9 +86,12 @@ pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
     }
 }
 
+type DurationFormatter = fn(&Duration) -> String;
+
 /// A writer that prefixes all lines with relative timestamps.
 pub struct RtssWriter<W> {
     inner: W,
+    formatter: DurationFormatter,
     separator: char,
     start: Instant,
     last: Instant,
@@ -95,9 +101,10 @@ pub struct RtssWriter<W> {
 impl<W: io::Write> RtssWriter<W> {
     /// Create a new `RtssWriter`, with a given start time, and delimiter separating
     /// the prefix and content.
-    pub fn new(inner: W, separator: char, now: &Instant) -> Self {
+    pub fn new(inner: W, formatter: DurationFormatter, separator: char, now: &Instant) -> Self {
         Self {
             inner,
+            formatter,
             separator,
             start: *now,
             last: *now,
@@ -111,8 +118,8 @@ impl<W: io::Write> io::Write for RtssWriter<W> {
     /// for any new lines.
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let now = Instant::now();
-        let start_duration = duration_to_human(&now.duration_since(self.start));
-        let line_duration = duration_to_human(&now.duration_since(self.last));
+        let start_duration = (self.formatter)(&now.duration_since(self.start));
+        let line_duration = (self.formatter)(&now.duration_since(self.last));
 
         let pfx_start = format!(
             "{:>8} {:>8} {} ",
@@ -170,11 +177,18 @@ impl<W: io::Write> io::Write for RtssWriter<W> {
 pub fn line_timing_copy<R: io::Read, W: io::Write>(
     mut input: &mut R,
     output: &mut W,
+    sortable: bool,
     separator: char,
     start: &Instant,
 ) -> io::Result<u64> {
+    let formatter = if sortable {
+        duration_to_sortable
+    } else {
+        duration_to_human
+    };
+
     let output = io::BufWriter::new(output);
-    let mut output = RtssWriter::new(output, separator, start);
+    let mut output = RtssWriter::new(output, formatter, separator, start);
 
     io::copy(&mut input, &mut output)
 }
