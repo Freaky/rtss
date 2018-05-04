@@ -13,6 +13,28 @@ use std::time::{Duration, Instant};
 extern crate memchr;
 use memchr::memchr;
 
+pub fn duration_to_sortable(d: &Duration) -> String {
+    let mut ret = String::with_capacity(16);
+    duration_to_sortable_replace(&d, &mut ret);
+    ret
+}
+
+pub fn duration_to_sortable_replace(d: &Duration, buf: &mut String) {
+    let ts = d.as_secs();
+    let us = d.subsec_nanos() / 1000;
+
+    buf.clear();
+
+    write!(
+        buf,
+        "{:02}:{:02}:{:02}.{:06}",
+        ts / 3600,
+        (ts % 3600) / 60,
+        ts % 60,
+        us
+    ).unwrap();
+}
+
 /// Convert a `time::Duration` to a formatted `String` such as
 /// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
 pub fn duration_to_human(d: &Duration) -> String {
