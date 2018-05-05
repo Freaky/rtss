@@ -86,7 +86,7 @@ pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
     }
 }
 
-type DurationFormatter = fn(&Duration) -> String;
+pub type DurationFormatter = fn(&Duration) -> String;
 
 /// A writer that prefixes all lines with relative timestamps.
 pub struct RtssWriter<W> {
@@ -177,16 +177,10 @@ impl<W: io::Write> io::Write for RtssWriter<W> {
 pub fn line_timing_copy<R: io::Read, W: io::Write>(
     mut input: &mut R,
     output: &mut W,
-    sortable: bool,
+    formatter: DurationFormatter,
     separator: char,
     start: &Instant,
 ) -> io::Result<u64> {
-    let formatter = if sortable {
-        duration_to_sortable
-    } else {
-        duration_to_human
-    };
-
     let output = io::BufWriter::new(output);
     let mut output = RtssWriter::new(output, formatter, separator, start);
 

@@ -10,7 +10,7 @@ use std::os::unix::io::FromRawFd;
 extern crate libc;
 
 extern crate rtss;
-use rtss::{duration_to_human, line_timing_copy};
+use rtss::{duration_to_human, duration_to_sortable, line_timing_copy, DurationFormatter};
 
 const VERSION: &str = "0.6.0";
 
@@ -67,7 +67,7 @@ fn main() {
     let mut command = vec![];
     let mut myargs = true;
     let mut use_tty = false;
-    let mut sortable = false;
+    let mut format_duration: DurationFormatter = duration_to_human;
     for arg in std::env::args_os().into_iter().skip(1) {
         if myargs {
             if &arg == "-h" || &arg == "--help" {
@@ -77,7 +77,7 @@ fn main() {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
             } else if &arg == "--sortable" {
-                sortable = true;
+                format_duration = duration_to_sortable;
             } else if cfg!(unix) && (&arg == "--pty" || &arg == "--tty") {
                 use_tty = true;
             } else if &arg == "--" {
@@ -98,14 +98,14 @@ fn main() {
     if command.is_empty() {
         let mut stdin = io::stdin();
         let mut ex = 0;
-        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, sortable, '|', &start) {
+        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, format_duration, '|', &start) {
             writeln!(io::stderr(), "{:?}", e).ok();
             ex = 64 + e.raw_os_error().unwrap_or(0);
         }
         writeln!(
             io::stdout(),
             "{:>8}    exit code: {}",
-            duration_to_human(&start.elapsed()),
+            format_duration(&start.elapsed()),
             ex
         ).ok();
         exit(ex);
@@ -131,18 +131,20 @@ fn main() {
 
         let out = if let Some((mut master, mut slave)) = tty {
             drop(slave);
-            thread::spawn(move || line_timing_copy(&mut master, &mut stdout, sortable, '|', &start))
+            thread::spawn(move || {
+                line_timing_copy(&mut master, &mut stdout, format_duration, '|', &start)
+            })
         } else {
             let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
             thread::spawn(move || {
-                line_timing_copy(&mut child_stdout, &mut stdout, sortable, '|', &start)
+                line_timing_copy(&mut child_stdout, &mut stdout, format_duration, '|', &start)
             })
         };
 
         let err = {
             let mut child_stderr = child.stderr.take().expect("Failed to attach to stderr");
             thread::spawn(move || {
-                line_timing_copy(&mut child_stderr, &mut stderr, sortable, '#', &start)
+                line_timing_copy(&mut child_stderr, &mut stderr, format_duration, '#', &start)
             })
         };
 
@@ -151,7 +153,7 @@ fn main() {
         writeln!(
             io::stdout(),
             "{:>8}    {}",
-            duration_to_human(&start.elapsed()),
+            format_duration(&start.elapsed()),
             status
         ).ok();
 
