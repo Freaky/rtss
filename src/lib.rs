@@ -125,7 +125,12 @@ impl<W: io::Write> io::Write for RtssWriter<W> {
             "{:>8} {:>8} {} ",
             start_duration, line_duration, self.separator
         );
-        let pfx_rest = format!("{:>8} {:>8} {} ", start_duration, "", self.separator);
+        let pfx_rest = format!(
+            "{:>8} {:>8} {} ",
+            start_duration,
+            (self.formatter)(&Duration::new(0, 0)),
+            self.separator
+        );
 
         let mut pos: usize = 0;
         let mut saw_eol = false;
