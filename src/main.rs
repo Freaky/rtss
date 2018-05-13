@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, Write};
+use std::io;
 use std::process::{exit, Command, Stdio};
 use std::thread;
 use std::time::Instant;
@@ -99,15 +99,14 @@ fn main() {
         let mut stdin = io::stdin();
         let mut ex = 0;
         if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, format_duration, '|', &start) {
-            writeln!(io::stderr(), "{:?}", e).ok();
+            eprintln!("{:?}", e);
             ex = 64 + e.raw_os_error().unwrap_or(0);
         }
-        writeln!(
-            io::stdout(),
+        println!(
             "{:>8}    exit code: {}",
             format_duration(&start.elapsed()),
             ex
-        ).ok();
+        );
         exit(ex);
     } else if let Some((cmd, args)) = command.split_first() {
         let mut child = Command::new(cmd);
@@ -116,16 +115,15 @@ fn main() {
             .stdin(Stdio::inherit())
             .stderr(Stdio::piped());
 
-        let mut tty: Option<(File, File)> = None;
-
-        if use_tty {
-            tty = Some(attach_tty(&mut child));
+        let tty: Option<(File, File)> = if use_tty {
+            Some(attach_tty(&mut child))
         } else {
             child.stdout(Stdio::piped());
-        }
+            None
+        };
 
         let mut child = child.spawn().unwrap_or_else(|e| {
-            writeln!(stderr, "{}: {}", cmd.to_string_lossy(), e).ok();
+            eprintln!("{}: {}", cmd.to_string_lossy(), e);
             exit(64 + e.raw_os_error().unwrap_or(0));
         });
 
@@ -150,21 +148,16 @@ fn main() {
 
         let status = child.wait().expect("waitpid");
 
-        writeln!(
-            io::stdout(),
-            "{:>8}    {}",
-            format_duration(&start.elapsed()),
-            status
-        ).ok();
+        println!("{:>8}    {}", format_duration(&start.elapsed()), status);
 
         if let Err(e) = err.join().expect("stderr thread panicked") {
-            writeln!(io::stderr(), "stderr: {}", e).ok();
+            eprintln!("stderr: {}", e);
         }
 
         if let Err(e) = out.join().expect("stdout thread panicked") {
             // suppress EIO in pty mode (thrown by Linux on normal exit)
             if !use_tty || e.raw_os_error().unwrap_or(0) != 5 {
-                writeln!(io::stderr(), "stdout: {}", e).ok();
+                eprintln!("stdout: {}", e);
             }
         }
 
