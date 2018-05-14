@@ -35,8 +35,19 @@ zsh: exit 64    rtss sh -c
 zsh: exit 64    rtss sh -c  2> /dev/null
 ```
 
-Blank durations indicate lines were read in a single `read()`.
+Blank durations indicate lines were read in a single `read()`.  Line durations are per-descriptor,
+so stderr and stdout have their own distinct durations.
 
+Output suitable for piping to `sort -k2` can be requested with `-s` / `--sortable`:
+
+```
+-% rtss --sortable sh -c "echo foo; echo bar; sleep 1; echo moo >&2; sleep 1; echo baz; exit 64"
+00:00:00.001652 00:00:00.001652 | foo
+00:00:00.001652 00:00:00.000000 | bar
+00:00:01.007287 00:00:01.007287 # moo
+00:00:02.071962 00:00:02.070309 | baz
+00:00:02.072185    exit code: 64
+```
 
 ### PTY mode
 
