@@ -76,7 +76,7 @@ fn main() {
             } else if &arg == "-v" || &arg == "--version" {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
-            } else if &arg == "--sortable" {
+            } else if &arg == "-s" || &arg == "--sortable" {
                 format_duration = duration_to_sortable;
             } else if cfg!(unix) && (&arg == "--pty" || &arg == "--tty") {
                 use_tty = true;
