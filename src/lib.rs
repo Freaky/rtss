@@ -6,83 +6,85 @@
 //! Also a couple of utility functions for formatting `Duration`, and copying from
 //! one IO to another.
 
-use std::fmt::Write as FmtWrite;
-use std::io;
+use std::io::{self, Cursor};
 use std::time::{Duration, Instant};
 
 extern crate memchr;
 use memchr::memchr;
 
-/// Convert a `time::Duration` to a formatted `String` sortable
-/// lexographically like "15:04:05.421224"
-pub fn duration_to_sortable(d: &Duration) -> String {
-    let mut ret = String::with_capacity(16);
-    duration_to_sortable_replace(&d, &mut ret);
-    ret
+pub trait RtssFormat {
+    fn write_human<W: io::Write>(&self, out: &mut W) -> io::Result<()>;
+    fn write_sortable<W: io::Write>(&self, out: &mut W) -> io::Result<()>;
+
+    /// Return the results of `write_human()` as a new `String`
+    fn human_string(&self) -> String {
+        let mut v = Cursor::new(Vec::with_capacity(16));
+        self.write_human(&mut v).unwrap();
+        String::from_utf8(v.into_inner()).unwrap()
+    }
+
+    /// Return the results of `write_sortable()` as a new `String`
+    fn sortable_string(&self) -> String {
+        let mut v = Cursor::new(Vec::with_capacity(16));
+        self.write_sortable(&mut v).unwrap();
+        String::from_utf8(v.into_inner()).unwrap()
+    }
 }
 
-/// As `duration_to_sortable`, but replacing the contents of the provided `String`.
-pub fn duration_to_sortable_replace(d: &Duration, buf: &mut String) {
-    let ts = d.as_secs();
-    let us = d.subsec_nanos() / 1000;
+impl RtssFormat for Duration {
+    /// Write a `Duration` to a formatted form for human consumption.
+    fn write_human<W: io::Write>(&self, out: &mut W) -> io::Result<()> {
+        let mut ts = self.as_secs();
+        let ns = self.subsec_nanos();
 
-    buf.clear();
+        if ts > 0 {
+            let mut cs = (f64::from(ns) / 10_000_000_f64).round() as u8;
+            if cs == 100 {
+                // round up to the nearest centisecond
+                ts += 1;
+                cs = 0;
+            }
 
-    write!(
-        buf,
-        "{:02}:{:02}:{:02}.{:06}",
-        ts / 3600,
-        (ts % 3600) / 60,
-        ts % 60,
-        us
-    ).unwrap();
-}
+            let mut s = ts;
 
-/// Convert a `time::Duration` to a formatted `String` such as
-/// "15h4m5.42s" or "424.2ms", or "" for a zero duration.
-pub fn duration_to_human(d: &Duration) -> String {
-    let mut ret = String::with_capacity(16);
-    duration_to_human_replace(&d, &mut ret);
-    ret
-}
+            if ts >= 86400 {
+                write!(out, "{}d", s / 86400)?;
+                s %= 86400;
+            }
 
-/// As duration_to_human, but replacing the contents of a user-provided `String`.
-pub fn duration_to_human_replace(d: &Duration, buf: &mut String) {
-    let mut ts = d.as_secs();
-    let ns = d.subsec_nanos();
+            if ts >= 3600 {
+                write!(out, "{}h", s / 3600)?;
+                s %= 3600;
+            }
 
-    buf.clear();
+            if ts >= 60 {
+                write!(out, "{}m", s / 60)?;
+                s %= 60
+            }
 
-    if ts > 0 {
-        let mut cs = (f64::from(ns) / 10_000_000_f64).round() as u8;
-        if cs == 100 {
-            // round up to the nearest centisecond
-            ts += 1;
-            cs = 0;
+            write!(out, "{}.{:02}s", s, cs)?;
+        } else if ns > 100_000 {
+            write!(out, "{:.1}ms", f64::from(ns) / 1_000_000_f64)?;
+        } else if ns > 100 {
+            write!(out, "{:.1}μs", f64::from(ns) / 1_000_f64)?;
         }
+        Ok(())
+    }
 
-        let mut s = ts;
+    /// Write a `Duration` to a formatted form sortable lexographically,
+    /// like "15:04:05.421224"
+    fn write_sortable<W: io::Write>(&self, out: &mut W) -> io::Result<()> {
+        let ts = self.as_secs();
+        let us = self.subsec_nanos() / 1000;
 
-        if ts >= 86400 {
-            write!(buf, "{}d", s / 86400).unwrap();
-            s %= 86400;
-        }
-
-        if ts >= 3600 {
-            write!(buf, "{}h", s / 3600).unwrap();
-            s %= 3600;
-        }
-
-        if ts >= 60 {
-            write!(buf, "{}m", s / 60).unwrap();
-            s %= 60
-        }
-
-        write!(buf, "{}.{:02}s", s, cs).unwrap();
-    } else if ns > 100_000 {
-        write!(buf, "{:.1}ms", f64::from(ns) / 1_000_000_f64).unwrap();
-    } else if ns > 100 {
-        write!(buf, "{:.1}μs", f64::from(ns) / 1_000_f64).unwrap();
+        write!(
+            out,
+            "{:02}:{:02}:{:02}.{:06}",
+            ts / 3600,
+            (ts % 3600) / 60,
+            ts % 60,
+            us
+        )
     }
 }
 

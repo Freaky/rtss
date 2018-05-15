@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io;
 use std::process::{exit, Command, Stdio};
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 #[cfg(unix)]
 use std::os::unix::io::FromRawFd;
@@ -10,7 +10,7 @@ use std::os::unix::io::FromRawFd;
 extern crate libc;
 
 extern crate rtss;
-use rtss::{duration_to_human, duration_to_sortable, line_timing_copy, DurationFormatter};
+use rtss::{line_timing_copy, DurationFormatter, RtssFormat};
 
 const VERSION: &str = "0.6.0";
 
@@ -67,7 +67,7 @@ fn main() {
     let mut command = vec![];
     let mut myargs = true;
     let mut use_tty = false;
-    let mut format_duration: DurationFormatter = duration_to_human;
+    let mut format_duration: DurationFormatter = Duration::human_string;
     for arg in std::env::args_os().into_iter().skip(1) {
         if myargs {
             if &arg == "-h" || &arg == "--help" {
@@ -77,7 +77,7 @@ fn main() {
                 println!("rtss version {}", VERSION);
                 std::process::exit(0);
             } else if &arg == "-s" || &arg == "--sortable" {
-                format_duration = duration_to_sortable;
+                format_duration = Duration::sortable_string;
             } else if cfg!(unix) && (&arg == "--pty" || &arg == "--tty") {
                 use_tty = true;
             } else if &arg == "--" {
