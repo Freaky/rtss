@@ -101,8 +101,27 @@ pub struct RtssWriter<W> {
 }
 
 impl<W: io::Write> RtssWriter<W> {
-    /// Create a new `RtssWriter`, with a given start time, and delimiter separating
-    /// the prefix and content.
+    /// Create a new `RtssWriter`, with a given start time, `Duration` formatter,
+    /// and delimiter separating the prefix and content.
+    ///
+    /// ```
+    /// use std::io::{self, Write};
+    /// use std::time::{Duration, Instant};
+    ///
+    /// extern crate rtss;
+    /// use rtss::{RtssWriter, RtssFormat};
+    ///
+    /// fn main() -> io::Result<()> {
+    ///     let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', &Instant::now());
+    ///     writer.write(b"Hello!\n")?;
+    ///     writer.write(b"World!\n")?;
+    ///     Ok(())
+    /// }
+    ///
+    /// // Expected output:
+    /// //   0.2μs    0.2μs | Hello!
+    /// //  84.7μs   84.6μs | World!
+    /// ```
     pub fn new(inner: W, formatter: DurationFormatter, separator: char, now: &Instant) -> Self {
         Self {
             inner,
