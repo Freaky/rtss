@@ -102,7 +102,7 @@ fn main() {
             eprintln!("{:?}", e);
             ex = 64 + e.raw_os_error().unwrap_or(0);
         }
-        println!(
+        eprintln!(
             "{:>8}    exit code: {}",
             format_duration(&start.elapsed()),
             ex
@@ -148,7 +148,7 @@ fn main() {
 
         let status = child.wait().expect("waitpid");
 
-        println!("{:>8}    {}", format_duration(&start.elapsed()), status);
+        eprintln!("{:>8}    {}", format_duration(&start.elapsed()), status);
 
         if let Err(e) = err.join().expect("stderr thread panicked") {
             eprintln!("stderr: {}", e);
