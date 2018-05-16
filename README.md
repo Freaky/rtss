@@ -77,15 +77,16 @@ until version 1.
 
 ```
 use std::io::{self, Write};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 extern crate rtss;
-use rtss::RtssWriter;
+use rtss::{RtssWriter, RtssFormat};
 
-fn main() {
-    let mut writer = RtssWriter::new(io::stdout(), '|', &Instant::now());
-    writer.write(b"Hello!\n").unwrap();
-    writer.write(b"World!\n").unwrap();
+fn main() -> io::Result<()> {
+    let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', &Instant::now());
+    writer.write(b"Hello!\n")?;
+    writer.write(b"World!\n")?;
+    Ok(())
 }
 ```
 
