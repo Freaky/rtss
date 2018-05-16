@@ -12,7 +12,7 @@ extern crate libc;
 extern crate rtss;
 use rtss::{line_timing_copy, DurationExt, DurationFormatter};
 
-const VERSION: &str = "0.6.0";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn usage() {
     println!(
