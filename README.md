@@ -70,17 +70,18 @@ rtss zpool status 5
 
 ## API
 
-The core of `rtss` — an `io::Write` implementation with timestamped output, a function
-to copy one IO to another using it, and one to pretty-print `Durations` — is exposed
-as a library for use in other programs.  Its interface should be considered unstable
-until version 1.
+The backend of `rtss` is provided as a library for use in other programs.  This includes:
+
+ * `RtssWriter` — an `io::Write` wrapper and implementation, forwarding `write()` calls and annotating newlines.
+ * `DurationExt` — extends `Duration` with `write_human()`, `write_sortable()`, `human_string()` and `sortable_string()` methods.
+ * `line_timing_copy()` — wraps an `io::Write` in `RtssWriter<BufWriter<W>>` and calls `io::copy()` on it and the provided `io::Read`.
 
 ```
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
 extern crate rtss;
-use rtss::{RtssWriter, RtssFormat};
+use rtss::{RtssWriter, DurationExt};
 
 fn main() -> io::Result<()> {
     let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', &Instant::now());
@@ -119,7 +120,6 @@ cd rtss &&
 cargo build --release &&
 target/release/rtss echo It works
 ```
-
 
 ## Alternatives
 
