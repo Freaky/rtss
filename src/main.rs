@@ -10,7 +10,7 @@ use std::os::unix::io::FromRawFd;
 extern crate libc;
 
 extern crate rtss;
-use rtss::{line_timing_copy, DurationFormatter, RtssFormat};
+use rtss::{line_timing_copy, DurationExt, DurationFormatter};
 
 const VERSION: &str = "0.6.0";
 

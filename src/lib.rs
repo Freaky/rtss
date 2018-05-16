@@ -12,8 +12,12 @@ use std::time::{Duration, Instant};
 extern crate memchr;
 use memchr::memchr;
 
-pub trait RtssFormat {
+pub trait DurationExt {
+    /// Write a `Duration` to a formatted form for human consumption.
     fn write_human<W: io::Write>(&self, out: &mut W) -> io::Result<()>;
+
+    /// Write a `Duration` to a formatted form sortable lexographically,
+    /// like "15:04:05.421224"
     fn write_sortable<W: io::Write>(&self, out: &mut W) -> io::Result<()>;
 
     /// Return the results of `write_human()` as a new `String`
@@ -31,8 +35,7 @@ pub trait RtssFormat {
     }
 }
 
-impl RtssFormat for Duration {
-    /// Write a `Duration` to a formatted form for human consumption.
+impl DurationExt for Duration {
     fn write_human<W: io::Write>(&self, out: &mut W) -> io::Result<()> {
         let mut ts = self.as_secs();
         let ns = self.subsec_nanos();
@@ -71,8 +74,6 @@ impl RtssFormat for Duration {
         Ok(())
     }
 
-    /// Write a `Duration` to a formatted form sortable lexographically,
-    /// like "15:04:05.421224"
     fn write_sortable<W: io::Write>(&self, out: &mut W) -> io::Result<()> {
         let ts = self.as_secs();
         let us = self.subsec_nanos() / 1000;
@@ -109,7 +110,7 @@ impl<W: io::Write> RtssWriter<W> {
     /// use std::time::{Duration, Instant};
     ///
     /// extern crate rtss;
-    /// use rtss::{RtssWriter, RtssFormat};
+    /// use rtss::{RtssWriter, DurationExt};
     ///
     /// fn main() -> io::Result<()> {
     ///     let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', &Instant::now());
