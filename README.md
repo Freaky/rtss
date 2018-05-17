@@ -57,7 +57,6 @@ under a pseudo-terminal.
 
 ```
 -% rtss zpool status 5
-rtss zpool status 5
   10.01s   10.01s |   pool: rpool
   10.01s          |  state: ONLINE
   10.01s          |   scan: scrub repaired 0 in 1h7m with 0 errors on Wed May  2 04:00:38 2018
