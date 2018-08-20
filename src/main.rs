@@ -17,7 +17,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn usage() {
     println!(
         "Usage: {} [-h | --help] [-v | --version] | {}[--] [COMMAND [ARGS ...]]",
-        std::env::args().into_iter().next().unwrap(),
+        std::env::args().next().unwrap(),
         if cfg!(unix) { "[--tty | --pty] " } else { "" }
     );
     println!();
@@ -68,7 +68,7 @@ fn main() {
     let mut myargs = true;
     let mut use_tty = false;
     let mut format_duration: DurationFormatter = Duration::human_string;
-    for arg in std::env::args_os().into_iter().skip(1) {
+    for arg in std::env::args_os().skip(1) {
         if myargs {
             if &arg == "-h" || &arg == "--help" {
                 usage();
