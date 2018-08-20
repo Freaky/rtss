@@ -83,7 +83,7 @@ extern crate rtss;
 use rtss::{RtssWriter, DurationExt};
 
 fn main() -> io::Result<()> {
-    let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', &Instant::now());
+    let mut writer = RtssWriter::new(io::stdout(), Duration::human_string, '|', Instant::now());
     writer.write(b"Hello!\n")?;
     writer.write(b"World!\n")?;
     Ok(())

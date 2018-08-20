@@ -98,7 +98,7 @@ fn main() {
     if command.is_empty() {
         let mut stdin = io::stdin();
         let mut ex = 0;
-        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, format_duration, '|', &start) {
+        if let Err(e) = line_timing_copy(&mut stdin, &mut stdout, format_duration, '|', start) {
             eprintln!("{:?}", e);
             ex = 64 + e.raw_os_error().unwrap_or(0);
         }
@@ -130,19 +130,19 @@ fn main() {
         let out = if let Some((mut master, mut slave)) = tty {
             drop(slave);
             thread::spawn(move || {
-                line_timing_copy(&mut master, &mut stdout, format_duration, '|', &start)
+                line_timing_copy(&mut master, &mut stdout, format_duration, '|', start)
             })
         } else {
             let mut child_stdout = child.stdout.take().expect("Failed to attach to stdout");
             thread::spawn(move || {
-                line_timing_copy(&mut child_stdout, &mut stdout, format_duration, '|', &start)
+                line_timing_copy(&mut child_stdout, &mut stdout, format_duration, '|', start)
             })
         };
 
         let err = {
             let mut child_stderr = child.stderr.take().expect("Failed to attach to stderr");
             thread::spawn(move || {
-                line_timing_copy(&mut child_stderr, &mut stderr, format_duration, '#', &start)
+                line_timing_copy(&mut child_stderr, &mut stderr, format_duration, '#', start)
             })
         };
 

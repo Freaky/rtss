@@ -123,13 +123,13 @@ impl<W: io::Write> RtssWriter<W> {
     /// //   0.2μs    0.2μs | Hello!
     /// //  84.7μs   84.6μs | World!
     /// ```
-    pub fn new(inner: W, formatter: DurationFormatter, separator: char, now: &Instant) -> Self {
+    pub fn new(inner: W, formatter: DurationFormatter, separator: char, now: Instant) -> Self {
         Self {
             inner,
             formatter,
             separator,
-            start: *now,
-            last: *now,
+            start: now,
+            last: now,
             at_eol: true,
         }
     }
@@ -206,7 +206,7 @@ pub fn line_timing_copy<R: io::Read, W: io::Write>(
     output: &mut W,
     formatter: DurationFormatter,
     separator: char,
-    start: &Instant,
+    start: Instant,
 ) -> io::Result<u64> {
     let output = io::BufWriter::new(output);
     let mut output = RtssWriter::new(output, formatter, separator, start);
