@@ -17,7 +17,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn usage() {
     println!(
         "Usage: {} [-h | --help] [-v | --version] | {}[--] [COMMAND [ARGS ...]]",
-        std::env::args().next().unwrap(),
+        std::env::args().nth(0).unwrap_or_default(),
         if cfg!(unix) { "[--tty | --pty] " } else { "" }
     );
     println!();
