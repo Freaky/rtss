@@ -51,10 +51,12 @@ fn attach_tty(child: &mut Command) -> (File, File) {
     }
 
     child.stdout(unsafe { Stdio::from_raw_fd(slave) });
-    child.before_exec(move || {
-        unsafe { libc::close(master) };
-        Ok(())
-    });
+    unsafe {
+        child.pre_exec(move || {
+            libc::close(master);
+            Ok(())
+        })
+    };
     unsafe { (File::from_raw_fd(master), File::from_raw_fd(slave)) }
 }
 
