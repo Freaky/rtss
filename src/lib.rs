@@ -76,7 +76,7 @@ impl DurationExt for Duration {
 
     fn write_sortable<W: io::Write>(&self, out: &mut W) -> io::Result<()> {
         let ts = self.as_secs();
-        let us = self.subsec_nanos() / 1000;
+        let us = self.subsec_micros();
 
         write!(
             out,
@@ -173,7 +173,7 @@ impl<W: io::Write> io::Write for RtssWriter<W> {
             if let Some(newline) = memchr(b'\n', &buf[pos..n]) {
                 saw_eol = true;
                 self.at_eol = true;
-                self.inner.write_all(&buf[pos..(pos + newline + 1)])?;
+                self.inner.write_all(&buf[pos..=pos + newline])?;
                 pos += newline + 1;
             } else {
                 self.at_eol = false;

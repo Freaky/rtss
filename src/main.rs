@@ -17,7 +17,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn usage() {
     println!(
         "Usage: {} [-h | --help] [-v | --version] | {}[--] [COMMAND [ARGS ...]]",
-        std::env::args().nth(0).unwrap_or_default(),
+        std::env::args().next().unwrap_or_default(),
         if cfg!(unix) { "[--tty | --pty] " } else { "" }
     );
     println!();
@@ -129,7 +129,7 @@ fn main() {
             exit(64 + e.raw_os_error().unwrap_or(0));
         });
 
-        let out = if let Some((mut master, mut slave)) = tty {
+        let out = if let Some((mut master, slave)) = tty {
             drop(slave);
             thread::spawn(move || {
                 line_timing_copy(&mut master, &mut stdout, format_duration, '|', start)
