@@ -9,7 +9,6 @@
 use std::io::{self, Cursor};
 use std::time::{Duration, Instant};
 
-extern crate memchr;
 use memchr::memchr;
 
 pub trait DurationExt {

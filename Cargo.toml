@@ -9,6 +9,7 @@ readme = "README.md"
 keywords = ["cli", "filter", "tool", "timestamp"]
 categories = ["command-line-utilities", "text-processing"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 memchr = "2"

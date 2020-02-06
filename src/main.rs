@@ -7,9 +7,6 @@ use std::time::{Duration, Instant};
 #[cfg(unix)]
 use std::os::unix::io::FromRawFd;
 
-extern crate libc;
-
-extern crate rtss;
 use rtss::{line_timing_copy, DurationExt, DurationFormatter};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
