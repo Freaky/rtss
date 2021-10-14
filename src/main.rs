@@ -11,20 +11,27 @@ use rtss::{line_timing_copy, DurationExt, DurationFormatter};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+fn print_opt(flags: &str, desc: &str) {
+    println!("  {:<16}{}", flags, desc);
+}
+
 fn usage() {
     println!(
-        "Usage: {} [-h | --help] [-v | --version] | {}[--] [COMMAND [ARGS ...]]",
-        std::env::args().next().unwrap_or_default(),
-        if cfg!(unix) { "[--tty | --pty] " } else { "" }
+        "Usage:\n  {} [options] [command] [args...]",
+        std::env::args().next().unwrap_or_default()
     );
-    println!();
-    println!("Prepends output lines with elapsed times since program start and previous line.");
-    println!();
-    println!("Use either to wrap stdout and stderr of a given command, or as a filter.");
-    if cfg!(unix) {
-        println!();
-        println!("Use --pty/--tty to unbuffer commands like tcpdump when ran under rtss.");
+
+    println!("\nOPTIONS");
+    print_opt("-h, --help", "display this help text and exit");
+    print_opt("-v, --version", "display version information and exit");
+    print_opt("--sortable", "use sortable timestamp format");
+    print_opt("--pty, --tty", "execute commands in a pseudo-terminal");
+
+    if !cfg!(unix) {
+        print_opt("", "(no-op - not supported on this platform)");
     }
+
+    println!("\nAnnotate stdin or given command with elapsed time between lines.");
 }
 
 #[cfg(unix)]
@@ -77,7 +84,7 @@ fn main() {
                 std::process::exit(0);
             } else if &arg == "-s" || &arg == "--sortable" {
                 format_duration = Duration::sortable_string;
-            } else if cfg!(unix) && (&arg == "--pty" || &arg == "--tty") {
+            } else if &arg == "--pty" || &arg == "--tty" {
                 use_tty = true;
             } else if &arg == "--" {
                 myargs = false;
@@ -114,7 +121,7 @@ fn main() {
             .stdin(Stdio::inherit())
             .stderr(Stdio::piped());
 
-        let tty: Option<(File, File)> = if use_tty {
+        let tty: Option<(File, File)> = if cfg!(unix) && use_tty {
             Some(attach_tty(&mut child))
         } else {
             child.stdout(Stdio::piped());
