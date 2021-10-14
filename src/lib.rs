@@ -61,7 +61,7 @@ impl DurationExt for Duration {
 
             if ts >= 60 {
                 write!(out, "{}m", s / 60)?;
-                s %= 60
+                s %= 60;
             }
 
             write!(out, "{}.{:02}s", s, cs)?;
